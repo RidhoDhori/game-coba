@@ -22,31 +22,14 @@ export default function App() {
   });
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-950 text-stone-100 font-sans selection:bg-amber-600 selection:text-white">
-      {/* Main Top Header with GandalfHardcore modular outfits */}
-      <Header profile={profile} setProfile={setProfile} />
-
-      {/* Main Game Stage Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col">
+    <div className="min-h-screen flex flex-col bg-black text-stone-100 font-sans selection:bg-amber-600 selection:text-white">
+      {/* Main Game Stage Area - Full Screen Game Only */}
+      <main className="flex-1 w-full h-screen overflow-hidden">
         <GameCanvas
           profile={profile}
           setProfile={setProfile}
         />
       </main>
-
-      {/* Global Footer */}
-      <footer className="border-t border-stone-800/80 bg-stone-900/60 py-4 px-4 text-xs text-stone-500 mt-auto">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 text-center md:text-left">
-          <div>
-            <span className="font-semibold text-stone-400">Cozy Medieval Village</span> • Petualangan santai di dunia pixel art yang damai.
-          </div>
-          <div className="flex items-center gap-4 text-stone-400">
-            <span>Mode Cozy: <span className="text-emerald-400 font-semibold">Aktif</span></span>
-            <span>•</span>
-            <span>Multi-Layer Background: <span className="text-stone-300">Aktif</span></span>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

@@ -491,10 +491,22 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ profile }) => {
           }
         });
 
-        // Camera smoothly tracks player
+        // Camera smoothly tracks player with wrap-around boundary
         const targetCamX = player.x - 960 / 2 + player.w / 2;
         state.cameraX += (targetCamX - state.cameraX) * 0.08;
-        state.cameraX = Math.max(0, Math.min(state.cameraX, 2400 - 960));
+        // Allow camera to go slightly beyond boundaries for better player movement
+        const maxCamX = 2400 - 960;
+        state.cameraX = Math.max(-200, Math.min(state.cameraX, maxCamX + 200));
+        
+        // Wrap player position when going off screen edges (seamless teleport)
+        const worldWidth = 2400;
+        if (player.x < -player.w) {
+          player.x = worldWidth;
+          state.cameraX = player.x - 960 / 2 + player.w / 2;
+        } else if (player.x > worldWidth + player.w) {
+          player.x = 0;
+          state.cameraX = player.x - 960 / 2 + player.w / 2;
+        }
       }
 
       // Update particles
@@ -778,18 +790,18 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ profile }) => {
   }, [profile, isGameOver, stats.stamina, stats.health, stats.maxHealth, stats.maxStamina, stats.gold, stats.score]);
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* Canvas Game Stage Frame */}
+    <div className="w-full h-screen bg-black flex items-center justify-center overflow-hidden">
       <div
         ref={containerRef}
-        className="relative bg-stone-950 rounded-xl overflow-hidden border border-stone-800 shadow-2xl aspect-[16/9] w-full max-w-5xl mx-auto"
+        className="relative bg-stone-950 w-full h-full max-w-[960px] max-h-[540px] aspect-video shadow-2xl"
       >
         <canvas
           id="game-canvas"
           ref={canvasRef}
           width={960}
           height={540}
-          className="w-full h-full object-contain cursor-crosshair block"
+          className="w-full h-full object-contain cursor-crosshair block image-pixelated"
+          style={{ imageRendering: 'pixelated' }}
         />
 
         {/* On-screen quick attack/jump action overlay for mouse/touch */}
@@ -823,139 +835,6 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ profile }) => {
             </button>
           </div>
         )}
-      </div>
-
-      {/* Season Theme Selector & Environment Status Banner */}
-      <div className="max-w-5xl mx-auto w-full bg-stone-900/80 border border-stone-800 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-md">
-        <div className="flex items-center gap-2 text-xs font-mono text-stone-300 flex-wrap">
-          <span className="text-amber-400 font-bold uppercase tracking-wider text-[11px]">Tema Musim:</span>
-          <div className="inline-flex rounded-lg bg-stone-950 p-1 border border-stone-800">
-            <button
-              onClick={() => setSeason('spring')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                season === 'spring'
-                  ? 'bg-emerald-700 text-white font-semibold shadow'
-                  : 'text-stone-400 hover:text-stone-200'
-              }`}
-            >
-              <Leaf className="w-3.5 h-3.5" />
-              <span>Musim Semi (Spring)</span>
-            </button>
-            <button
-              onClick={() => setSeason('autumn')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                season === 'autumn'
-                  ? 'bg-amber-700 text-white font-semibold shadow'
-                  : 'text-stone-400 hover:text-stone-200'
-              }`}
-            >
-              <Sun className="w-3.5 h-3.5" />
-              <span>Musim Gugur (Autumn)</span>
-            </button>
-            <button
-              onClick={() => setSeason('winter')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                season === 'winter'
-                  ? 'bg-sky-700 text-white font-semibold shadow'
-                  : 'text-stone-400 hover:text-stone-200'
-              }`}
-            >
-              <Snowflake className="w-3.5 h-3.5" />
-              <span>Musim Salju (Winter)</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 text-xs font-mono text-stone-400 flex-wrap">
-          <div className="flex items-center gap-1.5 text-amber-300/90">
-            <Flame className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
-            <span>Area Masak & Tungku Memulihkan HP</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-cyan-300/90">
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Tebas Batu Bijih untuk Tambang Emas</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Control Bar & Live Stats Dashboard featuring Gothic UI Bar */}
-      <div className="max-w-5xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-3">
-        {/* Gothic Maiden HUD Widget (7 Cols) */}
-        <div className="lg:col-span-7 bg-stone-950 border border-stone-800/90 rounded-xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
-          <div className="flex items-center gap-3">
-            <GothicHudBar
-              health={stats.health}
-              maxHealth={stats.maxHealth}
-              stamina={stats.stamina}
-              maxStamina={stats.maxStamina}
-              mana={Math.max(1, Math.min(12, Math.floor((stats.score % 240) / 20) + 3))}
-              maxMana={12}
-              heroName={profile.name}
-              scale={1.2}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5 w-full sm:w-auto text-xs font-mono">
-            <div className="flex items-center justify-between gap-4 text-stone-300">
-              <span className="flex items-center gap-1.5 text-red-400">
-                <Heart className="w-3.5 h-3.5" />
-                <span>HP Orb</span>
-              </span>
-              <span className="font-bold text-stone-100">{Math.round(stats.health)} / {stats.maxHealth}</span>
-            </div>
-            <div className="flex items-center justify-between gap-4 text-stone-300">
-              <span className="flex items-center gap-1.5 text-amber-400">
-                <Zap className="w-3.5 h-3.5" />
-                <span>Stamina</span>
-              </span>
-              <span className="font-bold text-stone-100">{Math.round(stats.stamina)} / {stats.maxStamina}</span>
-            </div>
-            <div className="flex items-center justify-between gap-4 text-stone-300">
-              <span className="flex items-center gap-1.5 text-sky-400">
-                <Shield className="w-3.5 h-3.5" />
-                <span>Mana Segments</span>
-              </span>
-              <span className="font-bold text-stone-100">
-                {Math.max(1, Math.min(12, Math.floor((stats.score % 240) / 20) + 3))} / 12
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Gold Looted & Score (2 Cols) */}
-        <div className="lg:col-span-2 bg-stone-900 border border-stone-800 p-3 rounded-xl flex flex-col justify-center gap-1">
-          <div className="flex items-center gap-2 text-amber-400">
-            <Coins className="w-4 h-4" />
-            <span className="text-[11px] uppercase font-mono tracking-wide text-stone-400">Looted</span>
-          </div>
-          <div className="text-base font-bold text-amber-300">{stats.gold} Gold</div>
-          <div className="text-[11px] text-stone-400 font-mono">{stats.score} score pts</div>
-        </div>
-
-        {/* Action: Reset Stage (3 Cols) */}
-        <div className="lg:col-span-3 bg-stone-900 border border-stone-800 p-3 rounded-xl flex flex-col justify-center gap-2">
-          <button
-            onClick={resetGame}
-            title="Reset Tahap Petualangan"
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-semibold shadow-md transition-all active:scale-95"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Ulangi Tahap / Reset</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Keyboard Controls Banner */}
-      <div className="max-w-5xl mx-auto w-full bg-stone-900/50 border border-stone-800/80 rounded-lg p-3 text-xs text-stone-400 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-4 flex-wrap">
-          <span className="font-semibold text-stone-200">Kontrol:</span>
-          <span><kbd className="px-1.5 py-0.5 bg-stone-800 text-stone-200 rounded border border-stone-700">A</kbd> / <kbd className="px-1.5 py-0.5 bg-stone-800 text-stone-200 rounded border border-stone-700">D</kbd> Gerak</span>
-          <span><kbd className="px-1.5 py-0.5 bg-stone-800 text-stone-200 rounded border border-stone-700">Space</kbd> / <kbd className="px-1.5 py-0.5 bg-stone-800 text-stone-200 rounded border border-stone-700">W</kbd> Lompat</span>
-          <span><kbd className="px-1.5 py-0.5 bg-stone-800 text-stone-200 rounded border border-stone-700">J</kbd> / <kbd className="px-1.5 py-0.5 bg-stone-800 text-stone-200 rounded border border-stone-700">Z</kbd> Tebas Pedang</span>
-        </div>
-        <div className="text-[11px] text-emerald-400 font-medium">
-          Multi-layer Background & Spritesheet Slicer Aktif
-        </div>
       </div>
     </div>
   );
