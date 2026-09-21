@@ -1,0 +1,6 @@
+{
+  "name": "Medieval 2D Platformer Engine",
+  "description": "Modular 2D cozy medieval platformer with GandalfHardcore Character & Platformer Asset Packs, authentic spritesheet slicing, and serene village exploration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
